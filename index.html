@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Modern Photo Gallery</title>
+  <style>
+    :root{
+      --bg:#0f1724;--card:#0b1220;--muted:#9aa6b2;--accent:#7c3aed;
+      --gap:16px;
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071023 0%,#051021 100%);color:#e6eef6;scroll-behavior:smooth}
+
+    /* Hero */
+    .hero{position:relative;overflow:hidden;padding:80px 20px 70px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .hero .hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;filter:blur(12px) brightness(.7);transform:scale(1.02);transition:filter .6s ease,transform .6s ease,opacity .5s ease;opacity:.95}
+    .hero .hero-content{position:relative;z-index:2;text-align:center;color:#fff}
+    .hero h1{font-size:2.8rem;margin:0 0 8px;text-shadow:0 3px 12px rgba(0,0,0,0.4);transition:transform .35s ease}
+    .hero p{font-size:1.15rem;margin:0 0 18px;color:rgba(255,255,255,0.9);text-shadow:0 2px 8px rgba(0,0,0,0.3);transition:transform .35s ease}
+    .hero .cta{background:#fff;color:#000;font-weight:600;border:none;border-radius:999px;padding:12px 24px;cursor:pointer;font-size:1rem;animation:pulse 1.8s infinite;transition:transform .3s ease}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,0.6)}70%{box-shadow:0 0 0 15px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 20px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#2dd4bf);display:flex;align-items:center;justify-content:center;font-weight:700}
+    .small-title{font-size:1.05rem;margin:0;color:var(--muted)}
+    .controls{display:flex;gap:8px;align-items:center}
+    .search{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;min-width:200px;color:inherit}
+    .filter-btn{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:999px;cursor:pointer;color:inherit}
+
+    .filters{display:flex;gap:8px;flex-wrap:wrap;padding:0 20px 12px}
+
+    main{padding:20px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--gap);padding:0 20px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,0.03);cursor:pointer;opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+    .card.visible{opacity:1;transform:translateY(0)}
+    .card img{width:100%;height:170px;object-fit:cover;display:block}
+    .meta{padding:10px 12px}
+    .title{font-weight:600;margin:0;font-size:.95rem}
+    .tags{margin-top:6px;font-size:.82rem;color:var(--muted)}
+
+    .load-more{display:block;margin:18px auto;padding:10px 18px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);cursor:pointer}
+
+    /* Lightbox */
+    .lightbox{position:fixed;inset:0;background:rgba(1,6,12,0.8);display:none;align-items:center;justify-content:center;padding:24px;z-index:999}
+    .lightbox.show{display:flex}
+    .lb-content{max-width:1100px;width:100%;max-height:90vh;background:var(--card);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+    .lb-img{flex:1;display:flex;align-items:center;justify-content:center;background:#071022}
+    .lb-img img{max-width:100%;max-height:85vh;object-fit:contain}
+    .lb-footer{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-top:1px solid rgba(255,255,255,0.03)}
+    .nav-btn,.close-btn{background:transparent;border:0;color:inherit;cursor:pointer;font-size:1rem;padding:8px}
+
+    @media (max-width:520px){.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}.card img{height:120px}.hero h1{font-size:1.6rem}}
+  </style>
+</head>
+<body>
+  <div class="hero" id="hero">
+    <!-- Low quality placeholder shown first; full image is loaded via JS -->
+    <img class="hero-bg" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=20" data-full="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80" alt="Hero Background" loading="lazy" decoding="async" fetchpriority="low">
+
+    <div class="hero-content">
+      <h1 id="heroTitle">Modern Photo Gallery</h1>
+      <p id="heroSubtitle">Explore, filter and view your favorite shots</p>
+      <button class="cta" id="heroBtn" onclick="document.querySelector('main').scrollIntoView({behavior:'smooth'})">Browse Gallery</button>
+    </div>
+  </div>
+
+  <header>
+    <div class="brand">
+      <div class="logo">G</div>
+      <div>
+        <div class="small-title">Modern Photo Gallery</div>
+        <div style="font-size:.8rem;color:var(--muted)">Responsive • Keyboard-friendly • Lazy-loaded</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input id="search" class="search" placeholder="Search titles or tags..." aria-label="Search gallery" />
+      <button id="toggleTheme" class="filter-btn" title="Toggle theme">Toggle</button>
+      <button id="runTestsBtn" class="filter-btn" title="Run tests">Run tests</button>
+    </div>
+  </header>
+
+  <section class="filters" aria-label="Filters">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="nature">Nature</button>
+    <button class="filter-btn" data-filter="city">City</button>
+    <button class="filter-btn" data-filter="people">People</button>
+    <button class="filter-btn" data-filter="abstract">Abstract</button>
+  </section>
+
+  <!-- Main exists now: CTA scroll target safe -->
+  <main id="main">
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <button id="loadMore" class="load-more">Load more</button>
+  </main>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="lb-content">
+      <div class="lb-img"><img id="lbImage" alt="Expanded photo" /></div>
+      <div class="lb-footer">
+        <div class="lb-meta">
+          <div id="lbTitle" style="font-weight:600"></div>
+          <div id="lbTags" style="font-size:0.9rem;color:var(--muted)"></div>
+        </div>
+        <div>
+          <button id="prevBtn" class="nav-btn" aria-label="Previous">◀</button>
+          <button id="nextBtn" class="nav-btn" aria-label="Next">▶</button>
+          <button id="closeBtn" class="close-btn" aria-label="Close">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Data ---
+    const items = [
+      {id:1,title:'Misty Mountain',tags:['nature'],src:'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80'},
+      {id:2,title:'City Sunset',tags:['city'],src:'https://images.unsplash.com/photo-1496467115032-c3b5f53a39fd?w=1200&q=80'},
+      {id:3,title:'Portrait Smile',tags:['people'],src:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200&q=80'},
+      {id:4,title:'Abstract Lines',tags:['abstract'],src:'https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=1200&q=80'},
+      {id:5,title:'Forest Path',tags:['nature'],src:'https://images.unsplash.com/photo-1501785888041-af3ef285b470?crop=entropy&w=1200&q=80'},
+      {id:6,title:'Neon Alley',tags:['city','abstract'],src:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80'},
+      {id:7,title:'Smiling Friend',tags:['people'],src:'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1200&q=80'},
+      {id:8,title:'Rocky Coast',tags:['nature'],src:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80'}
+    ];
+    // --- Elements ---
+    const GRID = document.getElementById('grid');
+    const LOAD_MORE = document.getElementById('loadMore');
+    const SEARCH = document.getElementById('search');
+    const FILTER_BTN = document.querySelectorAll('.filters .filter-btn, .filter-btn');
+    const HERO = document.getElementById('hero');
+    const HERO_BG = HERO.querySelector('.hero-bg');
+    const HERO_TITLE = document.getElementById('heroTitle');
+    const HERO_SUB = document.getElementById('heroSubtitle');
+    const HERO_BTN = document.getElementById('heroBtn');
+
+    const LB = document.getElementById('lightbox');
+    const LBIMAGE = document.getElementById('lbImage');
+    const LBTITLE = document.getElementById('lbTitle');
+    const LBTAGS = document.getElementById('lbTags');
+    const NEXT = document.getElementById('nextBtn');
+    const PREV = document.getElementById('prevBtn');
+    const CLOSE = document.getElementById('closeBtn');
+
+    let visible = 6;
+    let activeFilter = 'all';
+    let query = '';
+
+    // --- Render ---
+    function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+    function render(){
+      GRID.innerHTML = '';
+      const filtered = items.filter(item=>{
+        const matchesFilter = activeFilter==='all' || item.tags.includes(activeFilter);
+        const matchesQuery = query.trim()==='' || (item.title.toLowerCase().includes(query) || item.tags.join(' ').toLowerCase().includes(query));
+        return matchesFilter && matchesQuery;
+      });
+      const toShow = filtered.slice(0, visible);
+      toShow.forEach((it, idx)=>{
+        const el = document.createElement('div');
+        el.className='card';
+        el.style.transitionDelay = `${idx * 0.07}s`;
+        el.tabIndex = 0;
+        el.setAttribute('data-id',it.id);
+        el.innerHTML = `\n          <img loading="lazy" alt="${escapeHtml(it.title)}" src="${it.src}" />\n          <div class="meta"><div class="title">${escapeHtml(it.title)}</div><div class="tags">${it.tags.join(' • ')}</div></div>`;
+        el.addEventListener('click', ()=> openLightbox(it, filtered));
+        el.addEventListener('keydown', (e)=>{ if(e.key==='Enter') openLightbox(it, filtered); });
+        GRID.appendChild(el);
+      });
+      LOAD_MORE.style.display = (filtered.length > visible) ? 'block' : 'none';
+
+      // re-observe cards for animation
+      observeCards();
+    }
+
+    LOAD_MORE.addEventListener('click', ()=>{ visible += 6; render(); });
+
+    // Filters
+    document.querySelectorAll('.filters .filter-btn').forEach(b => b.addEventListener('click', ()=>{
+      document.querySelectorAll('.filters .filter-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      activeFilter = b.dataset.filter;
+      visible = 6;
+      render();
+    }));
+
+    // Search
+    SEARCH.addEventListener('input', (e)=>{ query = e.target.value.toLowerCase(); visible = 999; render(); });
+
+    // --- Lightbox ---
+    let currentIndex = 0;
+    let currentList = [];
+
+    function openLightbox(item, list){
+      currentList = Array.isArray(list) ? list : [];
+      currentIndex = currentList.findIndex(x=>x.id===item.id);
+      if(currentIndex < 0) currentIndex = 0;
+      showImage(currentIndex);
+      LB.classList.add('show'); LB.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+    function showImage(idx){
+      if(!currentList || currentList.length===0) return;
+      const it = currentList[idx]; if(!it) return;
+      LBIMAGE.src = it.src; LBIMAGE.alt = it.title;
+      LBTITLE.textContent = it.title; LBTAGS.textContent = it.tags.join(' • ');
+    }
+    function closeLightbox(){ LB.classList.remove('show'); LB.setAttribute('aria-hidden','true'); document.body.style.overflow = ''; }
+
+    NEXT.addEventListener('click', ()=>{ if(!currentList.length) return; currentIndex = (currentIndex+1) % currentList.length; showImage(currentIndex); });
+    PREV.addEventListener('click', ()=>{ if(!currentList.length) return; currentIndex = (currentIndex-1+currentList.length) % currentList.length; showImage(currentIndex); });
+    CLOSE.addEventListener('click', closeLightbox);
+
+    document.addEventListener('keydown',(e)=>{
+      if(LB.classList.contains('show')){
+        if(e.key==='ArrowRight') NEXT.click();
+        if(e.key==='ArrowLeft') PREV.click();
+        if(e.key==='Escape') CLOSE.click();
+      }
+    });
+    LB.addEventListener('click',(e)=>{ if(e.target===LB) closeLightbox(); });
+
+    // --- Card reveal observer ---
+    function observeCards(){
+      const observer = new IntersectionObserver(entries=>{
+        entries.forEach(entry=>{
+          if(entry.isIntersecting){ entry.target.classList.add('visible'); observer.unobserve(entry.target); }
+        });
+      },{threshold:0.18});
+      document.querySelectorAll('.card').forEach(card=>observer.observe(card));
+    }
+
+    // --- Hero: load full image (LQIP) and parallax/zoom ---
+    (function heroInit(){
+      const full = HERO_BG.dataset.full;
+      if(!full) return;
+      const img = new Image();
+      img.src = full; img.decoding = 'async';
+      img.onload = ()=>{
+        HERO_BG.src = full; HERO_BG.style.filter = 'none'; HERO_BG.style.transform = 'scale(1)';
+      };
+
+      // parallax/zoom using rAF
+      let lastScroll = 0; let ticking = false;
+      function onScroll(){ lastScroll = window.scrollY; if(!ticking){ window.requestAnimationFrame(()=>{ updateHero(lastScroll); ticking=false; }); ticking=true; }}
+      function updateHero(scrollTop){
+        const zoom = Math.min(scrollTop/200,1) * 0.05; // up to 5% scale
+        HERO_BG.style.transform = `scale(${1 + zoom})`;
+        const offset = scrollTop * 0.12;
+        HERO_TITLE.style.transform = `translateY(${offset}px)`;
+        HERO_SUB.style.transform = `translateY(${offset}px)`;
+        HERO_BTN.style.transform = `translateY(${offset}px)`;
+      }
+      window.addEventListener('scroll', onScroll, {passive:true});
+    })();
+
+    // --- Theme toggle (simple) ---
+    document.getElementById('toggleTheme').addEventListener('click', ()=>{
+      const root = document.documentElement;
+      if(root.hasAttribute('data-light')){ root.removeAttribute('data-light'); document.body.style.background=''; document.body.style.color=''; }
+      else { root.setAttribute('data-light',''); document.body.style.background='#fff'; document.body.style.color='#061826'; }
+    });
+
+    // --- Tests ---
+    function runTests(){
+      console.group('Gallery tests');
+      let passed = 0; let failed = 0;
+      function ok(cond, msg){ if(cond){ console.log('✔', msg); passed++; } else { console.error('✖', msg); failed++; } }
+      try{
+        // 1 - main exists
+        const mainEl = document.querySelector('main'); ok(!!mainEl, 'main element exists');
+        // 2 - render has created cards
+        render();
+        const cards = document.querySelectorAll('.card'); ok(cards.length>0, 'cards rendered');
+        // 3 - CTA target scrollIntoView exists and is callable
+        const target = document.querySelector('main'); ok(target && typeof target.scrollIntoView === 'function', 'scrollIntoView target exists');
+        // 4 - lightbox open/close smoke test
+        const prevOverflow = document.body.style.overflow;
+        openLightbox(items[0], items);
+        ok(LB.classList.contains('show'), 'lightbox opened');
+        closeLightbox();
+        ok(!LB.classList.contains('show'), 'lightbox closed');
+        document.body.style.overflow = prevOverflow;
+        // 5 - navigation buttons work
+        openLightbox(items[0], items);
+        const before = LBIMAGE.src;
+        NEXT.click(); ok(LBIMAGE.src !== before, 'next changes image (if multiple)');
+        PREV.click(); ok(LBIMAGE.src !== before || items.length===1, 'prev cycles image');
+        closeLightbox();
+      }catch(err){ console.error('Test error', err); }
+      console.log(`${passed} passed, ${failed} failed`);
+      console.groupEnd();
+    }
+
+    document.getElementById('runTestsBtn').addEventListener('click', runTests);
+
+    // --- Initial render ---
+    render();
+  </script>
+</body>
+</html>
