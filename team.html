@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your Name — Portfolio</title>
+  <meta name="description" content="Personal portfolio showcasing projects, skills and contact information." />
+  <link rel="icon" href="data:;base64,iVBORw0KGgo="> 
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#6ee7b7; --glass: rgba(255,255,255,0.03);
+      --radius:14px; --max-width:1100px;
+      --grad: linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%);
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; 
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.12), transparent),
+                  radial-gradient(900px 400px at 90% 90%, rgba(59,130,246,0.08), transparent),
+                  var(--bg);
+      color:#e6eef8; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      padding:32px 20px;
+      display:flex; justify-content:center;
+    }
+    .container{width:100%; max-width:var(--max-width);} 
+
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px; margin-bottom:28px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:48px;height:48px;border-radius:10px; background:var(--grad); display:flex;align-items:center;justify-content:center;font-weight:700}
+    .nav{display:flex;gap:14px;align-items:center}
+    .nav a{color:var(--muted);text-decoration:none;padding:8px 12px;border-radius:10px}
+    .nav a:hover{color:var(--accent);background:var(--glass)}
+
+    main{display:grid;grid-template-columns:1fr;gap:28px}
+    .hero{display:flex;gap:24px;align-items:center;padding:22px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:var(--radius);backdrop-filter: blur(6px)}
+    .hero-left{flex:1}
+    .hello{color:var(--accent);font-weight:600;margin:0}
+    h1{font-size:28px;margin:6px 0}
+    p.lead{color:var(--muted);margin:0 0 16px}
+    .cta{display:flex;gap:12px}
+    .btn{background:var(--grad);border:none;color:#021027;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent)}
+
+    .hero-right{width:220px;height:220px;border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+    .avatar{width:180px;height:180px;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#111827,#0b1220);display:flex;align-items:center;justify-content:center}
+    .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+
+    /* sections */
+    section{padding:18px;background:transparent;border-radius:12px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); padding:18px;border-radius:12px}
+    .grid{display:grid;gap:16px}
+    .projects{grid-template-columns:repeat(3,1fr)}
+    .skills{display:flex;gap:10px;flex-wrap:wrap}
+    .skill{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);font-weight:600}
+
+    /* project card */
+    .project{background:var(--card);padding:14px;border-radius:12px;cursor:pointer;transition:transform .18s ease, box-shadow .18s}
+    .project:hover{transform:translateY(-6px);box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+    .project .title{font-weight:700;margin:0 0 6px}
+    .project .desc{color:var(--muted);font-size:13px;margin:0}
+
+    /* contact */
+    form{display:grid;gap:12px}
+    input,textarea{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px;border-radius:10px;color:inherit}
+    input::placeholder,textarea::placeholder{color:var(--muted)}
+    .footer{display:flex;justify-content:space-between;align-items:center;color:var(--muted);margin-top:22px}
+
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.8));z-index:60}
+    .modal{width:min(900px,95%);max-height:90vh;background:var(--card);padding:18px;border-radius:12px;overflow:auto}
+    .modal-show{display:flex}
+
+    /* responsive */
+    @media (max-width:980px){.projects{grid-template-columns:repeat(2,1fr)} .hero{flex-direction:column;align-items:flex-start} .hero-right{width:100%;height:160px} }
+    @media (max-width:620px){.projects{grid-template-columns:1fr} header{flex-direction:column;align-items:flex-start} .nav{overflow:auto} h1{font-size:22px}}
+
+    /* small helpers */
+    .muted{color:var(--muted)}
+    .sep{height:1px;background:rgba(255,255,255,0.03);margin:12px 0;border-radius:4px}
+    .chip{display:inline-block;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:600}
+
+    /* back to top */
+    .top-btn{position:fixed;right:18px;bottom:18px;width:48px;height:48px;border-radius:12px;background:var(--grad);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
+
+    /* subtle animations */
+    .fade-in{animation:fadeIn .6s ease both}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="fade-in">
+      <div class="brand">
+        <div class="logo">YN</div>
+        <div>
+          <div style="font-weight:700">Your Name</div>
+          <div class="muted" style="font-size:12px">Frontend Developer • Designer</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#skills">Skills</a>
+        <a href="#contact">Contact</a>
+        <a class="ghost btn" id="download-resume">Resume</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero card fade-in" id="home">
+        <div class="hero-left">
+          <p class="hello">Hi, my name is</p>
+          <h1>YOUR NAME — I build delightful interfaces & web apps.</h1>
+          <p class="lead">I’m a frontend developer who cares about performance, accessibility and pixel-perfect designs. I build apps that people enjoy using and that scale gracefully.</p>
+          <div class="cta">
+            <button class="btn" onclick="scrollToSection('projects')">See projects</button>
+            <button class="btn ghost" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Contact me</button>
+          </div>
+          <div style="margin-top:12px" class="muted">Based in Nairobi • Open to remote work</div>
+        </div>
+        <div class="hero-right">
+          <div class="avatar" aria-hidden="true">
+            <!-- Replace with your photo: <img src="/path/to/me.jpg" alt="Your Name"> -->
+            <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="100" height="100" rx="12" fill="#071024"/>
+              <g fill="#6ee7b7">
+                <circle cx="50" cy="38" r="18"/>
+                <rect x="22" y="64" width="56" height="16" rx="8"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" class="card fade-in">
+        <h2 style="margin:0 0 8px">About</h2>
+        <p class="muted">I’m Your Name — a frontend developer focused on building accessible and performant user experiences.</p>
+        <div style="margin-top:12px" class="grid" >
+          <div style="display:flex;gap:12px;align-items:center">
+            <div style="width:72px;height:72px;border-radius:12px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:700">YN</div>
+            <div>
+              <div style="font-weight:700">Available for freelance & full-time</div>
+              <div class="muted">Experience: 3+ years • Preferred stack: HTML/CSS/JS, React</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:700">What I do</div>
+            <ul class="muted">
+              <li>Design and implement responsive UI</li>
+              <li>Build accessible and SEO-friendly markup</li>
+              <li>Optimize performance and deliver small bundles</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="projects" class="card fade-in">
+        <h2 style="margin:0 0 12px">Selected Projects</h2>
+        <div class="projects grid">
+          <!-- Project 1 -->
+          <article class="project" tabindex="0" role="button" data-title="Project Alpha" data-desc="A modern landing page built with performance in mind." data-img="" onclick="openModal(this)">
+            <div class="title">Project Alpha</div>
+            <p class="desc">Landing page with animations and A11y considerations.</p>
+          </article>
+
+          <!-- Project 2 -->
+          <article class="project" tabindex="0" role="button" data-title="Budget Tracker" data-desc="A small SPA to track incomes & expenses." onclick="openModal(this)">
+            <div class="title">Budget Tracker</div>
+            <p class="desc">SPA using vanilla JS with offline support.</p>
+          </article>
+
+          <!-- Project 3 -->
+          <article class="project" tabindex="0" role="button" data-title="Notes App" data-desc="Realtime collaborative notes (prototype)." onclick="openModal(this)">
+            <div class="title">Notes App</div>
+            <p class="desc">Prototype using WebRTC & IndexedDB.</p>
+          </article>
+
+          <!-- Project 4 -->
+          <article class="project" tabindex="0" role="button" data-title="E‑commerce UI" data-desc="Product listing & checkout UI patterns." onclick="openModal(this)">
+            <div class="title">E‑commerce UI</div>
+            <p class="desc">Design system and components.</p>
+          </article>
+
+          <!-- Project 5 -->
+          <article class="project" tabindex="0" role="button" data-title="Blog CMS" data-desc="A lightweight markdown CMS for blogs." onclick="openModal(this)">
+            <div class="title">Blog CMS</div>
+            <p class="desc">Works with static hosting & Git workflow.</p>
+          </article>
+
+          <!-- Project 6 -->
+          <article class="project" tabindex="0" role="button" data-title="Dashboard" data-desc="Analytics dashboard with charts." onclick="openModal(this)">
+            <div class="title">Dashboard</div>
+            <p class="desc">Reusable chart components & filters.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="skills" class="card fade-in">
+        <h2 style="margin:0 0 8px">Skills</h2>
+        <div class="skills">
+          <div class="skill">HTML</div>
+          <div class="skill">CSS</div>
+          <div class="skill">JavaScript</div>
+          <div class="skill">React</div>
+          <div class="skill">Accessibility</div>
+          <div class="skill">Performance</div>
+          <div class="skill">Design Systems</div>
+        </div>
+      </section>
+
+      <section id="contact" class="card fade-in">
+        <h2 style="margin:0 0 8px">Contact</h2>
+        <p class="muted">Want to work together or just say hi? Send a message.</p>
+        <form id="contactForm" onsubmit="handleContact(event)">
+          <input id="name" placeholder="Your name" required />
+          <input id="email" placeholder="Your email" type="email" required />
+          <textarea id="message" placeholder="Message" rows="4" required></textarea>
+          <div style="display:flex;gap:10px">
+            <button type="submit" class="btn">Send</button>
+            <button type="button" class="btn ghost" onclick="copyEmail()">Copy Email</button>
+          </div>
+        </form>
+        <div class="sep" aria-hidden></div>
+        <div class="footer">
+          <div class="muted">Or connect on <a href="https://www.linkedin.com" target="_blank" style="color:var(--accent)">LinkedIn</a> • <a href="https://github.com" target="_blank" style="color:var(--accent)">GitHub</a></div>
+          <div class="muted">© <span id="year"></span> Your Name</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal -->
+    <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-hidden="true">
+      <div class="modal" role="document">
+        <button style="float:right;background:transparent;border:none;color:var(--muted);font-weight:700;cursor:pointer" onclick="closeModal()">Close ✕</button>
+        <h3 id="modalTitle">Project</h3>
+        <p id="modalDesc" class="muted">Description</p>
+        <div style="margin-top:12px">
+          <div class="chip">Technologies: HTML • CSS • JS</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="topBtn" class="top-btn" title="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+  </div>
+
+  <script>
+    // small utilities
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    function scrollToSection(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+
+    // Modal
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    function openModal(el){
+      const title = el.dataset.title || 'Project';
+      const desc = el.dataset.desc || '';
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalDesc').textContent = desc;
+      modalBackdrop.classList.add('modal-show');
+      modalBackdrop.setAttribute('aria-hidden','false');
+      // trap focus simply
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(){
+      modalBackdrop.classList.remove('modal-show');
+      modalBackdrop.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+    modalBackdrop.addEventListener('click', (e)=>{ if(e.target===modalBackdrop) closeModal() })
+
+    // Contact handling (example: shows an alert and resets form)
+    function handleContact(e){
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const message = document.getElementById('message').value.trim();
+      if(!name||!email||!message){ alert('Please fill the form.'); return }
+      // In production: post to server or use Formspree / Netlify forms / email API
+      alert('Thanks '+name+" — message sent (demo). You can wire this form to an email endpoint.)");
+      e.target.reset();
+    }
+
+    function copyEmail(){
+      navigator.clipboard?.writeText('youremail@example.com').then(()=>{
+        alert('Email copied to clipboard: youremail@example.com')
+      }).catch(()=>{alert('Copy failed — please copy manually: youremail@example.com')})
+    }
+
+    // Keyboard accessibility: close modal with Esc
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal() })
+
+    // Resume download (demo: dynamically creates a simple text resume)
+    document.getElementById('download-resume').addEventListener('click', ()=>{
+      const resume = `Your Name\nFrontend Developer\n\nExperience:\n- 3+ years building web apps\n\nContact: youremail@example.com`;
+      const blob = new Blob([resume], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'Your-Name-Resume.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    // small nicety: show/hide back-to-top based on scroll
+    const topBtn = document.getElementById('topBtn');
+    window.addEventListener('scroll', ()=>{
+      if(window.scrollY>400) topBtn.style.display='flex'; else topBtn.style.display='none';
+    });
+    // hide initially
+    topBtn.style.display='none';
+
+    // progressive enhancement: keyboard open modal on Enter
+    document.querySelectorAll('.project').forEach(p=>{
+      p.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); openModal(p) } })
+    })
+  </script>
+</body>
+</html>
