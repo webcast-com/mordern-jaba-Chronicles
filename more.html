@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Modern Photo Gallery</title>
+  <style>
+    :root{
+      --bg:#0f1724;--card:#0b1220;--muted:#9aa6b2;--accent:#7c3aed;
+      --gap:16px;
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071023 0%,#051021 100%);color:#e6eef6}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:18px 20px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#2dd4bf);display:flex;align-items:center;justify-content:center;font-weight:700}
+    h1{font-size:1.05rem;margin:0}
+    .controls{display:flex;gap:8px;align-items:center}
+    .search{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;min-width:200px}
+    .filters{display:flex;gap:8px;flex-wrap:wrap;padding:0 20px 12px}
+    .filter-btn{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:999px;cursor:pointer}
+    .filter-btn.active{background:linear-gradient(90deg,var(--accent),#2dd4bf);color:#031926}
+
+    main{padding:0 20px 60px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--gap)}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+    .card img{width:100%;height:170px;object-fit:cover;display:block}
+    .meta{padding:10px 12px}
+    .title{font-weight:600;margin:0;font-size:0.95rem}
+    .tags{margin-top:6px;font-size:0.82rem;color:var(--muted)}
+    .badges{position:absolute;left:10px;top:10px;background:linear-gradient(90deg,#00000055,#00000022);padding:6px 8px;border-radius:999px;font-size:0.8rem}
+
+    .load-more{display:block;margin:18px auto;padding:10px 18px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);cursor:pointer}
+
+    /* Lightbox */
+    .lightbox{position:fixed;inset:0;background:rgba(1,6,12,0.8);display:none;align-items:center;justify-content:center;padding:24px;z-index:999}
+    .lightbox.show{display:flex}
+    .lb-content{max-width:1100px;width:100%;max-height:90vh;background:var(--card);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+    .lb-img{flex:1;display:flex;align-items:center;justify-content:center;background:#071022}
+    .lb-img img{max-width:100%;max-height:85vh;object-fit:contain}
+    .lb-footer{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-top:1px solid rgba(255,255,255,0.03)}
+    .lb-meta{display:flex;flex-direction:column}
+    .close-btn, .nav-btn{background:transparent;border:0;color:inherit;cursor:pointer;font-size:1rem;padding:8px}
+
+    /* Responsive tweaks */
+    @media (max-width:520px){.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}.card img{height:120px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">G</div>
+      <div>
+        <h1>Modern Photo Gallery</h1>
+        <div style="font-size:0.82rem;color:var(--muted)">Responsive • Keyboard-friendly • Lazy-loaded</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input id="search" class="search" placeholder="Search titles or tags..." aria-label="Search gallery" />
+      <button id="toggleTheme" title="Toggle theme" class="filter-btn">Toggle</button>
+      <button id="runTestsBtn" title="Run tests" class="filter-btn">Run tests</button>
+    </div>
+  </header>
+
+  <section class="filters" aria-label="Filters">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="nature">Nature</button>
+    <button class="filter-btn" data-filter="city">City</button>
+    <button class="filter-btn" data-filter="people">People</button>
+    <button class="filter-btn" data-filter="abstract">Abstract</button>
+  </section>
+
+  <main>
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <button id="loadMore" class="load-more">Load more</button>
+  </main>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="lb-content">
+      <div class="lb-img"><img id="lbImage" alt="Expanded photo" /></div>
+      <div class="lb-footer">
+        <div class="lb-meta">
+          <div id="lbTitle" style="font-weight:600"></div>
+          <div id="lbTags" style="font-size:0.9rem;color:var(--muted)"></div>
+        </div>
+        <div>
+          <button id="prevBtn" class="nav-btn" aria-label="Previous">◀</button>
+          <button id="nextBtn" class="nav-btn" aria-label="Next">▶</button>
+          <button id="closeBtn" class="close-btn" aria-label="Close">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Sample gallery data (replace `src` urls with your own images)
+    const items = [
+      {id:1,title:'Misty Mountain',tags:['nature'],src:'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80'},
+      {id:2,title:'City Sunset',tags:['city'],src:'https://images.unsplash.com/photo-1496467115032-c3b5f53a39fd?w=1200&q=80'},
+      {id:3,title:'Portrait Smile',tags:['people'],src:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200&q=80'},
+      {id:4,title:'Abstract Lines',tags:['abstract'],src:'https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=1200&q=80'},
+      {id:5,title:'Forest Path',tags:['nature'],src:'https://images.unsplash.com/photo-1501785888041-af3ef285b470?crop=entropy&w=1200&q=80'},
+      {id:6,title:'Neon Alley',tags:['city','abstract'],src:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80'},
+      {id:7,title:'Smiling Friend',tags:['people'],src:'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1200&q=80'},
+      {id:8,title:'Rocky Coast',tags:['nature'],src:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80'},
+      {id:9,title:'City Lights',tags:['city'],src:'https://images.unsplash.com/photo-1499346030926-9a72daac6c63?w=1200&q=80'},
+      {id:10,title:'Color Splash',tags:['abstract'],src:'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&q=80'},
+      {id:11,title:'Golden Hour',tags:['nature','people'],src:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80'},
+      {id:12,title:'Street Portrait',tags:['people','city'],src:'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=1200&q=80'}
+    ];
+
+    const GRID = document.getElementById('grid');
+    const LOAD_MORE = document.getElementById('loadMore');
+    const SEARCH = document.getElementById('search');
+    const FILTER_BTN = document.querySelectorAll('.filter-btn');
+
+    let visible = 6; // how many items initially
+    let activeFilter = 'all';
+    let query = '';
+
+    function render(){
+      GRID.innerHTML = '';
+      const filtered = items.filter(item=>{
+        const matchesFilter = activeFilter==='all' || item.tags.includes(activeFilter);
+        const matchesQuery = query.trim()==='' || (item.title.toLowerCase().includes(query) || item.tags.join(' ').toLowerCase().includes(query));
+        return matchesFilter && matchesQuery;
+      });
+      const toShow = filtered.slice(0, visible);
+      toShow.forEach(it=>{
+        const el = document.createElement('div'); el.className='card'; el.tabIndex=0; el.setAttribute('data-id',it.id);
+        el.innerHTML = `
+          <div class="badges">${it.tags.join(', ')}</div>
+          <img loading="lazy" alt="${escapeHtml(it.title)}" src="${it.src}" />
+          <div class="meta"><div class="title">${escapeHtml(it.title)}</div><div class="tags">${it.tags.join(' • ')}</div></div>`;
+        el.addEventListener('click',()=>openLightbox(it, filtered));
+        el.addEventListener('keydown',(e)=>{ if(e.key==='Enter') openLightbox(it, filtered)});
+        GRID.appendChild(el);
+      });
+      LOAD_MORE.style.display = (filtered.length>visible)?'block':'none';
+    }
+
+    // sanitize minimal
+    function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+    LOAD_MORE.addEventListener('click',()=>{ visible += 6; render(); });
+
+    // Filters
+    FILTER_BTN.forEach(b=>b.addEventListener('click',()=>{
+      FILTER_BTN.forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      activeFilter = b.dataset.filter;
+      visible = 6;
+      render();
+    }));
+
+    // Search
+    SEARCH.addEventListener('input', (e)=>{ query = e.target.value.toLowerCase(); visible = 999; render(); });
+
+    // Lightbox logic
+    const LB = document.getElementById('lightbox');
+    const LBIMAGE = document.getElementById('lbImage');
+    const LBTITLE = document.getElementById('lbTitle');
+    const LBTAGS = document.getElementById('lbTags');
+    const NEXT = document.getElementById('nextBtn');
+    const PREV = document.getElementById('prevBtn');
+    const CLOSE = document.getElementById('closeBtn');
+
+    let currentIndex = 0;
+    let currentList = [];
+
+    function openLightbox(item, list){
+      currentList = list;
+      currentIndex = list.findIndex(x=>x.id===item.id);
+      showImage(currentIndex);
+      LB.classList.add('show'); LB.setAttribute('aria-hidden','false');
+      document.body.style.overflow='hidden';
+    }
+    function showImage(idx){
+      const it = currentList[idx];
+      if(!it) return;
+      LBIMAGE.src = it.src; LBIMAGE.alt = it.title;
+      LBTITLE.textContent = it.title;
+      LBTAGS.textContent = it.tags.join(' • ');
+    }
+    function closeLightbox(){ LB.classList.remove('show'); LB.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+
+    NEXT.addEventListener('click',()=>{ if(!currentList || currentList.length===0) return; currentIndex = (currentIndex+1)%currentList.length; showImage(currentIndex); });
+    PREV.addEventListener('click',()=>{ if(!currentList || currentList.length===0) return; currentIndex = (currentIndex-1+currentList.length)%currentList.length; showImage(currentIndex); });
+    CLOSE.addEventListener('click', ()=>{ closeLightbox(); });
+
+    // keyboard
+    document.addEventListener('keydown',(e)=>{
+      if(LB.classList.contains('show')){
+        if(e.key==='ArrowRight') NEXT.click();
+        if(e.key==='ArrowLeft') PREV.click();
+        if(e.key==='Escape') CLOSE.click();
+      }
+    });
+
+    // click outside to close
+    LB.addEventListener('click',(e)=>{ if(e.target===LB) CLOSE.click(); });
+
+    // theme toggle (simple)
+    document.getElementById('toggleTheme').addEventListener('click',()=>{
+      const root = document.documentElement;
+      if(root.style.getPropertyValue('--bg')===''){
+        root.style.setProperty('--bg','#ffffff');
+        root.style.setProperty('--card','#f7fafc');
+        root.style.setProperty('--muted','#6b7280');
+        document.body.style.color='#061826';
+        document.body.style.background='linear-gradient(180deg,#f8fafc,#eef2ff)';
+      } else {
+        root.style.removeProperty('--bg'); root.style.removeProperty('--card'); root.style.removeProperty('--muted');
+        document.body.style.color=''; document.body.style.background='';
+      }
+    });
+
+    // basic test runner
+    function runTests(){
+      console.group('Gallery tests');
+      try{
+        console.assert(typeof render === 'function','render exists');
+        console.assert(typeof openLightbox === 'function','openLightbox exists');
+        console.assert(typeof closeLightbox === 'function','closeLightbox exists');
+
+        // Open/close test
+        const before = LB.classList.contains('show');
+        openLightbox(items[0], items);
+        if(!LB.classList.contains('show')) throw new Error('lightbox did not open');
+        closeLightbox();
+        if(LB.classList.contains('show')) throw new Error('lightbox did not close');
+
+        console.log('lightbox open/close test passed');
+      }catch(err){ console.error('Test failed:', err); }
+      console.groupEnd();
+    }
+    document.getElementById('runTestsBtn').addEventListener('click', runTests);
+
+    // initial render
+    render();
+
+    // Accessibility: ensure focus trap in lightbox (basic)
+    CLOSE.addEventListener('keydown',(e)=>{ if(e.key==='Tab') e.preventDefault(); });
+  </script>
+</body>
+</html>
